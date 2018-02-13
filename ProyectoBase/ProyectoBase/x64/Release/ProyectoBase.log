@@ -1,0 +1,8 @@
+﻿  Main.cpp
+Main.cpp(21): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
+  Generating code
+  112 of 112 functions (100.0%) were compiled, the rest were copied from previous compilation.
+    34 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  ProyectoBase.vcxproj -> C:\Users\Freee\Downloads\ProyectoBase\x64\Release\ProyectoBase.exe
