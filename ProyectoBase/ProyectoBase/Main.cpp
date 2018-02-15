@@ -4,20 +4,20 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <mutex>
+#include <thread>
+
+using namespace std;
 
 #define MAX_MENSAJES 30
 
 void Server();
 void Client();
+void Missatges(sf::RenderWindow& windowRef);
 
 int main()
-{
-	// Esablecimiento de la conexión
-	// Preguntar quien es con un cin, servidor o cliente
-	
-	char connectionType, mode;
-	char buffer[2000];
-	std::size_t received;
+{	
+	char connectionType;
 
 	std::cout << "Enter (s) for Server, Enter (c) for Client: ";
 	std::cin >> connectionType;
@@ -30,13 +30,111 @@ int main()
 	{
 		Client();
 	}
-
-	std::vector<std::string> aMensajes;
+	else {
+		exit(0);
+	}
 
 	sf::Vector2i screenDimensions(800, 600);
 
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Chat");
+
+	Missatges(window);
+
+}
+
+void Server() {
+	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
+	sf::TcpListener listener;
+	sf::Socket::Status status;
+	char mode;
+	sf::Packet packet;
+	
+	std::cout << "1. Blocking + Threading" << std::endl;
+	std::cout << "2. NonBlocking" << std::endl;
+	std::cout << "3. Blocking + SocketSelector" << std::endl;
+	std::cin >> mode;
+
+	status = listener.listen(5000);
+
+	if (status != sf::Socket::Done) {
+		//no se puede vincular al puerto 5000
+		std::cout << "No se puede vincular al puerto 5000" << std::endl;
+		exit(0);
+	}
+
+	sf::TcpSocket socket;
+
+	if (listener.accept(socket) != sf::Socket::Done) {
+		//error al acceptar la conexion
+		std::cout << "Error al acceptar la conexion" << std::endl;
+	}
+	else {
+		packet << mode;
+		socket.send(packet);
+	}
+
+	switch (mode) {
+	case '1':
+
+		break;
+	case '2':
+		break;
+	case '3':
+		break;
+	}
+
+	
+
+	
+	
+	//listener.close();
+}
+
+void Client() {
+	sf::TcpSocket socket;
+	sf::Packet packet;
+	char*mode = 0;
+
+	sf::Socket::Status status = socket.connect("localhost", 50000, sf::milliseconds(15.f));
+	
+	if (status != sf::Socket::Done)
+	{
+		std::cout << "Error al establecer conexion\n";
+		//exit(0);
+	}
+	else
+	{
+		std::cout << "Se ha establecido conexion con el Servidor\n";
+		socket.receive(packet);
+		packet >> mode;
+
+		if (!(packet >> mode)) {
+			//error no hay datos
+		}
+		else {
+			switch (*mode) {
+			case '1':
+				//Modo Blocking + Threading
+				break;
+			case '2':
+				//Modo NonBlocking
+				break;
+			case '3':
+				//Modo Blocking + SocketSelector
+				break;
+			}
+		}
+
+	}
+}
+
+void Missatges(sf::RenderWindow& windowRef) {
+	sf::TcpSocket socket;
+	sf::Packet packet;
+
+	//part de missatges
+	std::vector<std::string> aMensajes;
 
 	sf::Font font;
 	if (!font.loadFromFile("courbd.ttf"))
@@ -60,19 +158,19 @@ int main()
 	separator.setFillColor(sf::Color(200, 200, 200, 255));
 	separator.setPosition(0, 550);
 
-	while (window.isOpen())
+	while (windowRef.isOpen())
 	{
 		sf::Event evento;
-		while (window.pollEvent(evento))
+		while (windowRef.pollEvent(evento))
 		{
 			switch (evento.type)
 			{
 			case sf::Event::Closed:
-				window.close();
+				windowRef.close();
 				break;
 			case sf::Event::KeyPressed:
 				if (evento.key.code == sf::Keyboard::Escape)
-					window.close();
+					windowRef.close();
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					aMensajes.push_back(mensaje);
@@ -82,6 +180,9 @@ int main()
 					}
 
 					// Send
+					packet << mensaje;
+
+					//socket.send(packet);
 
 					mensaje = ">";
 				}
@@ -96,118 +197,20 @@ int main()
 		}
 		// Receive
 
-		window.draw(separator);
+		windowRef.draw(separator);
 		for (size_t i = 0; i < aMensajes.size(); i++)
 		{
 			std::string chatting = aMensajes[i];
 			chattingText.setPosition(sf::Vector2f(0, 20 * i));
 			chattingText.setString(chatting);
-			window.draw(chattingText);
+			windowRef.draw(chattingText);
 		}
 		std::string mensaje_ = mensaje + "_";
 		text.setString(mensaje_);
-		window.draw(text);
+		windowRef.draw(text);
 
 
-		window.display();
-		window.clear();
-	}
-
-}
-
-void Server() {
-	bool running = true;
-	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
-	sf::TcpListener listener;
-	sf::Socket::Status status;
-	// Create a list to store the future clients
-	std::list<sf::TcpSocket*> clients;
-	
-	status = listener.listen(5000);
-
-	if (status != sf::Socket::Done) {
-		//no se puede vincular al puerto 5000
-		std::cout << "no se puede vincular al puerto 5000" << std::endl;
-		exit(0);
-	}
-
-	// Create a selector
-	sf::SocketSelector selector;
-	// Add the listener to the selector
-	selector.add(listener);
-
-	while (running)
-	{
-		// Make the selector wait for data on any socket
-		if (selector.wait())
-		{
-			// Test the listener
-			if (selector.isReady(listener))
-			{
-				// The listener is ready: there is a pending connection
-				sf::TcpSocket* client = new sf::TcpSocket;
-				if (listener.accept(*client) == sf::Socket::Done)
-				{
-					// Add the new client to the clients list
-					std::cout << "Llega el cliente con puerto: " << client->getRemotePort() << std::endl;
-					clients.push_back(client);
-					// Add the new client to the selector so that we will
-					// be notified when he sends something
-					selector.add(*client);
-				}
-				else
-				{
-					// Error, we won't get a new connection, delete the socket
-					std::cout << "Error al recoger conexión nueva\n";
-					delete client;
-				}
-			}
-			else
-			{
-				// The listener socket is not ready, test all other sockets (the clients)
-				for (std::list<sf::TcpSocket*>::iterator it = clients.begin(); it != clients.end(); ++it)
-				{
-					sf::TcpSocket& client = **it;
-					if (selector.isReady(client))
-					{
-						// The client has sent some data, we can receive it
-						sf::Packet packet;
-						status = client.receive(packet);
-						if (status == sf::Socket::Done)
-						{
-							std::string strRec;
-							packet >> strRec;
-							std::cout << "He recibido " << strRec << " del puerto " << client.getRemotePort() << std::endl;
-						}
-						else if (status == sf::Socket::Disconnected)
-						{
-							selector.remove(client);
-							std::cout << "Elimino el socket que se ha desconectado\n";
-						}
-						else
-						{
-							std::cout << "Error al recibir de " << client.getRemotePort() << std::endl;
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	
-	//listener.close();
-}
-
-void Client() {
-	sf::TcpSocket socket;
-	sf::Socket::Status status = socket.connect("localhost", 50000, sf::milliseconds(15.f));
-	if (status != sf::Socket::Done)
-	{
-		std::cout << "Error al establecer conexion\n";
-		exit(0);
-	}
-	else
-	{
-		std::cout << "Se ha establecido conexion con el Servidor\n";
+		windowRef.display();
+		windowRef.clear();
 	}
 }
