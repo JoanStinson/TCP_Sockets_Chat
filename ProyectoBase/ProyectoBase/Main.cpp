@@ -37,7 +37,13 @@ int main()
 	sf::Vector2i screenDimensions(800, 600);
 
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Chat");
+	if (connectionType == 's') {
+		window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Server");
+	}
+	else {
+		window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Client");
+	}
+	
 
 	Missatges(window);
 
@@ -47,7 +53,7 @@ void Server() {
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
 	sf::TcpListener listener;
 	sf::Socket::Status status;
-	char mode;
+	int mode;
 	sf::Packet packet;
 	
 	std::cout << "1. Blocking + Threading" << std::endl;
@@ -72,11 +78,13 @@ void Server() {
 	else {
 		packet << mode;
 		socket.send(packet);
+		std::cout << "Enviado packet";
 	}
 
 	switch (mode) {
 	case '1':
-
+		//threads
+		
 		break;
 	case '2':
 		break;
@@ -84,47 +92,40 @@ void Server() {
 		break;
 	}
 
-	
-
-	
-	
-	//listener.close();
+	listener.close();
 }
 
 void Client() {
 	sf::TcpSocket socket;
 	sf::Packet packet;
-	char*mode = 0;
+	int mode = 0;
 
-	sf::Socket::Status status = socket.connect("localhost", 50000, sf::milliseconds(15.f));
+	sf::Socket::Status status = socket.connect("localhost", 5000, sf::milliseconds(15.f));
 	
 	if (status != sf::Socket::Done)
 	{
 		std::cout << "Error al establecer conexion\n";
-		//exit(0);
+		exit(0);
 	}
 	else
 	{
 		std::cout << "Se ha establecido conexion con el Servidor\n";
 		socket.receive(packet);
 		packet >> mode;
-
-		if (!(packet >> mode)) {
-			//error no hay datos
+		
+		switch (mode) {
+		case 1:
+			//Modo Blocking + Threading
+			
+			break;
+		case 2:
+			//Modo NonBlocking
+			break;
+		case 3:
+			//Modo Blocking + SocketSelector
+			break;
 		}
-		else {
-			switch (*mode) {
-			case '1':
-				//Modo Blocking + Threading
-				break;
-			case '2':
-				//Modo NonBlocking
-				break;
-			case '3':
-				//Modo Blocking + SocketSelector
-				break;
-			}
-		}
+		
 
 	}
 }
@@ -182,7 +183,7 @@ void Missatges(sf::RenderWindow& windowRef) {
 					// Send
 					packet << mensaje;
 
-					//socket.send(packet);
+					socket.send(packet);
 
 					mensaje = ">";
 				}
@@ -196,6 +197,9 @@ void Missatges(sf::RenderWindow& windowRef) {
 			}
 		}
 		// Receive
+		/*packet >> mensaje;
+
+		socket.receive(packet);*/
 
 		windowRef.draw(separator);
 		for (size_t i = 0; i < aMensajes.size(); i++)
