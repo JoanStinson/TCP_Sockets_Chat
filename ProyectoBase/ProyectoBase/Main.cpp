@@ -116,6 +116,7 @@ void Client() {
 		switch (mode) {
 		case 1:
 			//Modo Blocking + Threading
+
 			
 			break;
 		case 2:
@@ -159,6 +160,9 @@ void Missatges(sf::RenderWindow& windowRef) {
 	separator.setFillColor(sf::Color(200, 200, 200, 255));
 	separator.setPosition(0, 550);
 
+	// Crear threads antes del bucle con mutex para mayor control (sólo 1 threads)
+	// Thread de la función que gestiona los receives y demás
+
 	while (windowRef.isOpen())
 	{
 		sf::Event evento;
@@ -172,6 +176,8 @@ void Missatges(sf::RenderWindow& windowRef) {
 			case sf::Event::KeyPressed:
 				if (evento.key.code == sf::Keyboard::Escape)
 					windowRef.close();
+
+				// Cuando le damos click al enter, es cuando enviamos el mensaje
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					aMensajes.push_back(mensaje);
@@ -197,6 +203,7 @@ void Missatges(sf::RenderWindow& windowRef) {
 			}
 		}
 		// Receive
+		// Hacer el receive normal y corriente
 		/*packet >> mensaje;
 
 		socket.receive(packet);*/

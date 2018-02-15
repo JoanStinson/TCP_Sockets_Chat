@@ -1,5 +1,4 @@
 ﻿  Main.cpp
-c:\users\mmolina\documents\taller1xarxes\proyectobase\proyectobase\main.cpp(103): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
-c:\users\mmolina\documents\taller1xarxes\proyectobase\proyectobase\main.cpp(209): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
-  ProyectoBase.vcxproj -> C:\Users\mmolina\Documents\Taller1Xarxes\ProyectoBase\x64\Debug\ProyectoBase.exe
-  ProyectoBase.vcxproj -> C:\Users\mmolina\Documents\Taller1Xarxes\ProyectoBase\x64\Debug\ProyectoBase.pdb (Partial PDB)
+c:\users\freee\documents\taller1xarxes\proyectobase\proyectobase\main.cpp(103): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
+c:\users\freee\documents\taller1xarxes\proyectobase\proyectobase\main.cpp(208): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+  ProyectoBase.vcxproj -> C:\Users\Freee\Documents\Taller1Xarxes\ProyectoBase\x64\Debug\ProyectoBase.exe
