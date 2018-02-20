@@ -20,6 +20,8 @@ void MessagesSelector(string type);																			 // Mode 3: Blocking + Soc
 void Receive(size_t received, vector<string>* messages, sf::RenderWindow* window);							 // Receive Mode 1 & 2
 void ReceiveSS(size_t received, vector<string>* messages, sf::RenderWindow* window, sf::SocketSelector* ss); // Receive Mode 3
 
+//Tocar threads solo en recursos mensajes, dentro del while lock, receive, aMensajes_pushback, unlock
+
 int main()
 {
 	//Primero la conexión
