@@ -11,6 +11,7 @@ using namespace std;
 
 std::mutex mut;
 sf::TcpSocket socket;
+sf::TcpListener listener;
 bool isEnd;
 char buffer[2000];
 
@@ -33,7 +34,7 @@ int main()
 	// Si es el servidor
 	if (connectionType == 's')
 	{
-		sf::TcpListener listener;
+		
 		sf::Socket::Status status;
 		int mode;
 		std::cout << "1. Blocking + Threading" << std::endl;
@@ -127,16 +128,17 @@ int main()
 void Receive(size_t received, vector<string>* messages, sf::RenderWindow* window) {
 
 	while (!isEnd) { // while we don't write "exit"
-		mut.lock();
+		
 		sf::Socket::Status status = socket.receive(buffer, 2000, received);
 
 		if (status == sf::Socket::Disconnected) 
 			isEnd = true;
 		
+		mut.lock();
 		if (status == sf::Socket::Done) 
 			messages->push_back(buffer);
-		
 		mut.unlock();
+		
 	}
 }
 
@@ -148,16 +150,17 @@ void ReceiveSS(size_t received, vector<string>* messages, sf::RenderWindow* wind
 		while (ss->wait()){
 
 			if (ss->isReady(socket)){
-				mut.lock();
+				
 				sf::Socket::Status status = socket.receive(buffer, 2000, received);
 
 				if (status == sf::Socket::Disconnected)
 					isEnd = true;
 
+				mut.lock();
 				if (status == sf::Socket::Done)
 					messages->push_back(buffer);
-
 				mut.unlock();
+				
 			}
 		}
 	}
@@ -213,11 +216,13 @@ void MessagesThreads(string type) {
 					window.close();
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
+					mut.lock();
 					messages.push_back(message);
 					if (messages.size() > 25)
 					{
 						messages.erase(messages.begin(), messages.begin() + 1);
 					}
+					mut.unlock();
 
 					// Send
 					messageStr = type + ": ";
@@ -228,6 +233,7 @@ void MessagesThreads(string type) {
 					if (message == ">exit" || message == " >exit") {
 						isEnd = true;
 						socket.disconnect();
+						listener.close();
 						exit(0);
 					}
 
@@ -329,6 +335,7 @@ void MessagesNonBlocking(string type) {
 					if (mensaje == ">exit" || mensaje == " >exit") {
 						isEnd = true;
 						socket.disconnect();
+						listener.close();
 						exit(0);
 					}
 
@@ -451,6 +458,7 @@ void MessagesSelector(string type) {
 					if (message == ">exit" || message == " >exit") {
 						isEnd = true;
 						socket.disconnect();
+						listener.close();
 						exit(0);
 					}
 
