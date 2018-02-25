@@ -7,15 +7,16 @@
 #include <mutex>
 
 #define MAX_MESSAGES 30
-#define DEFAULT_PORT 50000
-#define BUFFER_SIZE 2000
+#define DEFAULT_PORT 5000
 
 sf::TcpSocket theSocket;
 sf::TcpListener theListener;
 std::mutex mutex;
 bool isEnd;
 char buffer[2000];
+int userNum = 1;
 
+/// TALLER 1
 // Receive Mode 1 
 void Receive(size_t received, std::vector<std::string>* messages, sf::RenderWindow* window) {
 
@@ -52,7 +53,6 @@ void ReceiveSS(size_t received, std::vector<std::string>* messages, sf::RenderWi
 				if (status == sf::Socket::Done)
 					messages->push_back(buffer);
 				mutex.unlock();
-				
 			}
 		}
 	}
@@ -110,7 +110,7 @@ void MessagesThreads(std::string type) {
 				{
 					mutex.lock();
 					messages.push_back(message);
-					if (messages.size() > 25)
+					if (messages.size() > MAX_MESSAGES)
 					{
 						messages.erase(messages.begin(), messages.begin() + 1);
 					}
@@ -215,7 +215,7 @@ void MessagesNonBlocking(std::string type) {
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					messages.push_back(mensaje);
-					if (messages.size() > 25)
+					if (messages.size() > MAX_MESSAGES)
 					{
 						messages.erase(messages.begin(), messages.begin() + 1);
 					}
@@ -336,7 +336,7 @@ void MessagesSelector(std::string type) {
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					messages.push_back(message);
-					if (messages.size() > 25)
+					if (messages.size() > MAX_MESSAGES)
 					{
 						messages.erase(messages.begin(), messages.begin() + 1);
 					}
@@ -390,131 +390,98 @@ void MessagesSelector(std::string type) {
 	theSocket.disconnect();
 }
 
-//Escucha por un socket determinado y escribe el mensaje llegado.
-//socket: Es el socket al cual debemos escuchar.
-//recived: La longitud de los datos que recibiremos.
-//aMensajes: Es donde contendra todos los mensajes del chat.
-void RecivedFunction(sf::TcpSocket* socket, size_t* recived, std::vector<std::string>* aMensajes, sf::RenderWindow* window) {
+/// TALLER 2
+void ReceiveTaller2(sf::TcpSocket* socket, size_t* received, std::vector<std::string>* messages, sf::RenderWindow* window) {
 
 	while (window->isOpen()) {
-		char buffer[BUFFER_SIZE];
-		sf::Socket::Status status = socket->receive(buffer, sizeof(buffer), *recived);
-		std::string s = buffer;
+		char buffer[2000];
+		sf::Socket::Status status = socket->receive(buffer, sizeof(buffer), *received);
+		std::string str = buffer;
 
 		if (status == sf::Socket::Status::Done) {
 			mutex.lock();
-			aMensajes->push_back(s);
-			if (aMensajes->size() > 25)
-				aMensajes->erase(aMensajes->begin(), aMensajes->begin() + 1);
+			messages->push_back(str);
+			if (messages->size() > MAX_MESSAGES)
+				messages->erase(messages->begin(), messages->begin() + 1);
 			mutex.unlock();
 		}
 	}
-
 }
 
-void DisconnectUser(std::vector<sf::TcpSocket*>& list, sf::SocketSelector *ss, int i) {
+void DisconnectTaller2(std::vector<sf::TcpSocket*>& list, sf::SocketSelector *ss, int userNum) {
 
-	//Lo eliminamos del Socket Selector
-	ss->remove(*list[i]);
+	ss->remove(*list[userNum]); // remove from ss, because it has disconnected
+	list[userNum]->disconnect(); // disconnect
 
-	//Desconectamos el socket del cliente
-	list[i]->disconnect();
+	delete(list[userNum]);
+	list.erase(list.begin() + userNum, list.begin() + userNum + 1);
 
-	delete(list[i]);
-
-	//Eliminamos el socket de la lista
-	list.erase(list.begin() + i, list.begin() + i + 1);
-
-
-	//Informamos que un usuario se ha desconectado
 	for (sf::TcpSocket* socket : list) {
-		std::string outMsn = "A User Disconnected";
+		std::string outMsn = "El cliente " + std::to_string(userNum+1) + " se ha desconectado!";
 		socket->send(outMsn.c_str(), outMsn.size() + 1);
 	}
-
-	std::cout << "User Disconnected" << std::endl;
+	std::cout << "El cliente " + std::to_string(userNum+1) + " se ha desconectado!" << std::endl;
 }
 
 void ServerTaller2() {
-	//ESTABLECER CONNECION
-	sf::SocketSelector ss;
-	std::vector<sf::TcpSocket*> socketList;
-	sf::TcpSocket::Status socketStatus;
 
+	sf::SocketSelector sSelector;
+	std::vector<sf::TcpSocket*> sList;
+	sf::TcpSocket::Status sStatus;
 	sf::TcpListener listener;
-	sf::TcpListener::Status listenerStatus;
+	sf::TcpListener::Status lStatus;
 
-	char buffer[BUFFER_SIZE];
-	std::string msn;
-	size_t recived;
+	char buffer[2000];
+	std::string message;
+	size_t received;
+	//int userNum = 1;
 
-	//Le indicamos a que puerto debe escuchar para el servidor
-	listenerStatus = listener.listen(DEFAULT_PORT);
+	lStatus = listener.listen(DEFAULT_PORT);
+	sSelector.add(listener); // pass listener to selector
 
-	//Añadimos el listener al Socket Selector
-	ss.add(listener);
+	while (lStatus != sf::TcpListener::Status::Disconnected) {
 
-	while (listenerStatus != sf::TcpListener::Status::Disconnected)
-	{
-		//Mientras haya elementos en el Socket Selector, esperara a que algun socket le envie algo.
-		while (ss.wait())
-		{
-			//Comprovamos si es un Listener
-			if (ss.isReady(listener))
-			{
+		// while not disconnected wait for a message from socket
+		while (sSelector.wait()) {
 
-				//Se añade el socket al Socket Selector
+			// check if it's listener
+			if (sSelector.isReady(listener)) {
 				sf::TcpSocket* socket = new sf::TcpSocket();
-				//Esperamos peticion de un cliente
 				sf::TcpListener::Status st = listener.accept(*socket);
 				if (st == sf::TcpListener::Status::Done)
-					socketList.push_back(socket);
+					sList.push_back(socket);
 
-				ss.add(*socket);
+				sSelector.add(*socket);
 
-				//Les indicamos que se ha connectado un nuevo usuario
-				msn = "New User Connected!";
-				for (sf::TcpSocket* s : socketList)
-				{
-					if (s != socket)s->send(msn.c_str(), msn.size() + 1);
-				}
+				message = "Se ha conectado el cliente " + std::to_string(userNum) + "!";
+				for (sf::TcpSocket* s : sList)
+					if (s != socket)s->send(message.c_str(), message.size() + 1);
 
-				std::cout << "New User Connected" << std::endl;
+				std::cout << "Se ha conectado el cliente " + std::to_string(userNum) + "!" << std::endl;
+				userNum++;
 			}
 
-			//Si no es el listener, sera un socket
-			else
-			{
+			// if not listener, socket
+			else {
 
-				//Miramos de que socket recivimos el mensaje
-				for (int j = 0; j < socketList.size(); j++)
-				{
-					//Encontramos el socket
-					if (ss.isReady(*socketList[j]))
-					{
-						//Recivimos el mensaje.
-						socketStatus = socketList[j]->receive(buffer, sizeof(buffer), recived);
+				for (int i = 0; i < sList.size(); i++) {
 
-						//Pasar el contenido del buffer, al string de mensaje.
-						if (socketStatus == sf::TcpSocket::Status::Done)
-						{
-							msn = buffer;
+					if (sSelector.isReady(*sList[i])) {
 
-							//Enviamos el mensajes
-							for (int i = 0; i < socketList.size(); i++)
-							{
-								sf::TcpSocket::Status st = socketList[i]->send(msn.c_str(), msn.size() + 1);
+						// Receive
+						sStatus = sList[i]->receive(buffer, sizeof(buffer), received);
+
+						if (sStatus == sf::TcpSocket::Status::Done) {
+							message = buffer;
+							for (int j = 0; j < sList.size(); j++) {
+								sf::TcpSocket::Status st = sList[j]->send(message.c_str(), message.size() + 1);
 
 								if (st == sf::TcpSocket::Status::Error)
-									std::cout << "Error al enviar" << std::endl;
-
+									std::cout << "Error" << std::endl;
 							}
 						}
-
-						//Si se ha desconnectado
-						else if (socketStatus == sf::TcpSocket::Status::Disconnected)
-							DisconnectUser(socketList, &ss, j);
-
+						else if (sStatus == sf::TcpSocket::Status::Disconnected)
+							DisconnectTaller2(sList, &sSelector, i);
 						break;
 					}
 				}
@@ -522,36 +489,26 @@ void ServerTaller2() {
 		}
 	}
 
-	//Vaciar el Socket Selector
-	ss.clear();
-
-	//Paramos de escuchar el puerto, para así dejarlo libre.
+	// Cleanup
+	sSelector.clear();
 	listener.close();
-
-	//Desconnectamos todos los clientes
-	for (sf::TcpSocket* &socket : socketList)
+	for (sf::TcpSocket* &socket : sList)
 		socket->disconnect();
-
-	//Limpiamos el vector
-	socketList.clear();
+	sList.clear();
 }
 
 void ClientTaller2() {
-	//ESTABLECER CONNECION
+
 	sf::TcpSocket socket;
 	sf::TcpSocket::Status socketStatus;
 	size_t recived;
-
-	// Obtenemos nuestra direccion ip, y nos connectamos con el puerto indicado y nuestra ip
-	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
+	sf::IpAddress ip = sf::IpAddress::getLocalAddress(); // ip local
 	socket.connect(ip, DEFAULT_PORT);
 
-	std::vector<std::string> aMensajes;
-
+	std::vector<std::string> messages;
 	sf::Vector2i screenDimensions(800, 600);
-
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Chat");
+	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Cliente");
 
 	sf::Font font;
 	if (!font.loadFromFile("courbd.ttf"))
@@ -563,7 +520,6 @@ void ClientTaller2() {
 	chattingText.setFillColor(sf::Color(0, 160, 0));
 	chattingText.setStyle(sf::Text::Bold);
 
-
 	sf::Text text(mensaje, font, 24);
 	text.setFillColor(sf::Color(0, 160, 0));
 	text.setStyle(sf::Text::Bold);
@@ -573,11 +529,10 @@ void ClientTaller2() {
 	separator.setFillColor(sf::Color(200, 200, 200, 255));
 	separator.setPosition(0, 550);
 
-	std::string msn;
+	std::string messageStr;
 
-	//RECIVE
-	//Se genera un thread (hilo), que escucha si llegan mensajes o no.
-	std::thread t(RecivedFunction, &socket, &recived, &aMensajes, &window);
+	// Receive
+	std::thread t(ReceiveTaller2, &socket, &recived, &messages, &window);
 
 	while (window.isOpen())
 	{
@@ -594,18 +549,15 @@ void ClientTaller2() {
 					window.close();
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
-					// SEND
-					// Pasamos el mensaje a std::string para hacerlo mas facil en el momento de enviarlo.
-					msn = mensaje;
-					socketStatus = socket.send(msn.c_str(), msn.size() + 1);
-					if (socketStatus == sf::TcpSocket::Status::Disconnected)
-					{
-						msn = "Server Disconnected";
-						aMensajes.push_back(msn);
-						if (aMensajes.size() > 25)
-						{
-							aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
-						}
+					// Send
+					messageStr = "Cliente:"; //+ std::to_string(userNum);
+					messageStr += mensaje;
+					socketStatus = socket.send(messageStr.c_str(), messageStr.size() + 1);
+					if (socketStatus == sf::TcpSocket::Status::Disconnected) {
+						messageStr = "Servidor desconectado!";
+						messages.push_back(messageStr);
+						if (messages.size() > MAX_MESSAGES)
+							messages.erase(messages.begin(), messages.begin() + 1);
 					}
 
 					mensaje = ">";
@@ -620,11 +572,9 @@ void ClientTaller2() {
 			}
 		}
 
-
 		window.draw(separator);
-		for (size_t i = 0; i < aMensajes.size(); i++)
-		{
-			std::string chatting = aMensajes[i];
+		for (size_t i = 0; i < messages.size(); i++) {
+			std::string chatting = messages[i];
 			chattingText.setPosition(sf::Vector2f(0, 20 * i));
 			chattingText.setString(chatting);
 			window.draw(chattingText);
@@ -633,12 +583,11 @@ void ClientTaller2() {
 		text.setString(mensaje_);
 		window.draw(text);
 
-
 		window.display();
 		window.clear();
 	}
 
-
+	// Cleanup
 	socket.disconnect();
 	t.join();
 }
@@ -646,100 +595,117 @@ void ClientTaller2() {
 // MAIN
 int main() {
 
-	// Determinar si es servidor o cliente
-	char connectionType;
-	std::cout << "Introduce (s) para Servidor o (c) para Cliente: ";
-	std::cin >> connectionType;
+	// Determinar el taller
+	char tallerType;
+	std::cout << "Introduce (1) para Taller 1 o (2) para Taller 2: ";
+	std::cin >> tallerType;
 
-	// Si es el servidor
-	if (connectionType == 's') {
+	/// Taller 1
+	if (tallerType == '1') {
+		std::cout << "Has seleccionado Taller 1" << std::endl << std::endl;
+		// Determinar si es servidor o cliente
+		char connectionType;
+		std::cout << "Introduce (s) para Servidor o (c) para Cliente: ";
+		std::cin >> connectionType;
 
-		sf::Socket::Status status;
-		sf::Packet packet;
+		// Si es el servidor
+		if (connectionType == 's') {
 
-		// Seleccionamos el modo
-		int mode;
-		std::cout << "Has elegido Servidor" << std::endl << std::endl;
-		std::cout << "Ahora selecciona el modo con un (numero): " << std::endl;
-		std::cout << "1. Blocking + Threading" << std::endl;
-		std::cout << "2. NonBlocking" << std::endl;
-		std::cout << "3. Blocking + SocketSelector" << std::endl;
-		std::cout << "4. Taller2" << std::endl;
-		std::cin >> mode;
-
-		status = theListener.listen(5000);
-
-		if (status != sf::Socket::Done) {
-			std::cout << "No se puede vincular al puerto 5000" << std::endl;
-			exit(0);
-		}
-
-		if (theListener.accept(theSocket) != sf::Socket::Done) {
-			std::cout << "Error al acceptar la conexion" << std::endl;
-		}
-		else {
-			packet << mode;
-			theSocket.send(packet);
-			std::cout << "Enviado packet del mode" << std::endl;
-
-			switch (mode) {
-			case 1:
-				std::cout << "Has seleccionado modo Blocking + Threading" << std::endl;
-				MessagesThreads("Server");
-				break;
-			case 2:
-				std::cout << "Has seleccionado modo NonBlocking" << std::endl;
-				MessagesNonBlocking("Server");
-				break;
-			case 3:
-				std::cout << "Has seleccionado modo Blocking + SocketSelector" << std::endl;
-				MessagesSelector("Server");
-				break;
-			case 4:
-				std::cout << "Has seleccionado modo Taller2" << std::endl;
-				ServerTaller2();
-				break;
-			}
-		}
-		theListener.close();
-	}
-
-	// Si es el cliente
-	else if (connectionType == 'c') {
-
-		// ip localhost
-		sf::IpAddress ip = sf::IpAddress::getLocalAddress();
-		sf::Socket::Status status = theSocket.connect("localhost", 5000, sf::milliseconds(15.f));
-
-		if (status != sf::Socket::Done) {
-			std::cout << "Error al establecer conexion" << std::endl;
-			exit(0);
-		}
-		else {
-			std::cout << "Se ha establecido conexion con el Servidor\n";
-			int mode = 0;
+			sf::Socket::Status status;
 			sf::Packet packet;
-			theSocket.receive(packet);
-			packet >> mode;
 
-			switch (mode) {
-			case 1:
-				std::cout << "Has seleccionado modo Blocking + Threading" << std::endl;
-				MessagesThreads("Client");
-				break;
-			case 2:
-				std::cout << "Has seleccionado modo NonBlocking" << std::endl;
-				MessagesNonBlocking("Client");
-				break;
-			case 3:
-				std::cout << "Has seleccionado modo Blocking + SocketSelector" << std::endl;
-				MessagesSelector("Client");
-				break;
-			case 4:
-				std::cout << "Has seleccionado modo Taller2" << std::endl;
-				ClientTaller2();
-				break;
+			// Seleccionamos el modo
+			int mode;
+			std::cout << "Has seleccionado Servidor" << std::endl << std::endl;
+			std::cout << "Ahora elige el modo con un (numero): " << std::endl;
+			std::cout << "1. Blocking + Threading" << std::endl;
+			std::cout << "2. NonBlocking" << std::endl;
+			std::cout << "3. Blocking + SocketSelector" << std::endl;
+			std::cin >> mode;
+
+			status = theListener.listen(DEFAULT_PORT);
+
+			if (status != sf::Socket::Done) {
+				std::cout << "No se puede vincular al puerto 5000" << std::endl;
+				exit(0);
 			}
+
+			if (theListener.accept(theSocket) != sf::Socket::Done) {
+				std::cout << "Error al acceptar la conexion" << std::endl;
+			}
+			else {
+				packet << mode;
+				theSocket.send(packet);
+				std::cout << "Enviado packet del mode" << std::endl;
+
+				switch (mode) {
+				case 1:
+					std::cout << "Has seleccionado modo Blocking + Threading" << std::endl;
+					MessagesThreads("Servidor");
+					break;
+				case 2:
+					std::cout << "Has seleccionado modo NonBlocking" << std::endl;
+					MessagesNonBlocking("Servidor");
+					break;
+				case 3:
+					std::cout << "Has seleccionado modo Blocking + SocketSelector" << std::endl;
+					MessagesSelector("Servidor");
+					break;
+				}
+			}
+			theListener.close();
+		}
+
+		// Si es el cliente
+		else if (connectionType == 'c') {
+
+			// ip localhost
+			sf::IpAddress ip = sf::IpAddress::getLocalAddress();
+			sf::Socket::Status status = theSocket.connect("localhost", DEFAULT_PORT, sf::milliseconds(15.f));
+
+			if (status != sf::Socket::Done) {
+				std::cout << "Error al establecer conexion" << std::endl;
+				exit(0);
+			}
+			else {
+				std::cout << "Se ha establecido conexion con el Servidor\n";
+				int mode = 0;
+				sf::Packet packet;
+				theSocket.receive(packet);
+				packet >> mode;
+
+				switch (mode) {
+				case 1:
+					std::cout << "Has seleccionado modo Blocking + Threading" << std::endl;
+					MessagesThreads("Cliente");
+					break;
+				case 2:
+					std::cout << "Has seleccionado modo NonBlocking" << std::endl;
+					MessagesNonBlocking("Cliente");
+					break;
+				case 3:
+					std::cout << "Has seleccionado modo Blocking + SocketSelector" << std::endl;
+					MessagesSelector("Cliente");
+					break;
+				}
+			}
+		}
+	}
+	/// Taller 2
+	else if (tallerType == '2') {
+		std::cout << "Has seleccionado Taller 2" << std::endl << std::endl;
+		// Determinar si es servidor o cliente
+		char connectionType;
+		std::cout << "Introduce (s) para Servidor o (c) para Cliente: ";
+		std::cin >> connectionType;
+
+		// Si es el servidor
+		if (connectionType == 's') {
+			ServerTaller2();
+		}
+		// Si es el cliente
+		else if (connectionType == 'c') {
+			ClientTaller2();
 		}
 	}
 }
