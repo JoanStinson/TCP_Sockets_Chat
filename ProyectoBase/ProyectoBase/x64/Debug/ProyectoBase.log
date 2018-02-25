@@ -1,6 +1,7 @@
 ﻿  Main.cpp
-c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(89): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
-c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(257): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
-c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(377): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
-c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(482): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(149): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(269): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(374): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(628): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+c:\users\freee\documents\repos\tallersxarxes\proyectobase\proyectobase\main.cpp(712): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
   ProyectoBase.vcxproj -> C:\Users\Freee\Documents\repos\TallersXarxes\ProyectoBase\x64\Debug\ProyectoBase.exe
