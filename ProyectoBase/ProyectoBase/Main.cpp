@@ -501,7 +501,7 @@ void ClientTaller2() {
 
 	sf::TcpSocket socket;
 	sf::TcpSocket::Status socketStatus;
-	size_t recived;
+	size_t received;
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress(); // ip local
 	socket.connect(ip, DEFAULT_PORT);
 
@@ -532,7 +532,7 @@ void ClientTaller2() {
 	std::string messageStr;
 
 	// Receive
-	std::thread t(ReceiveTaller2, &socket, &recived, &messages, &window);
+	std::thread t(ReceiveTaller2, &socket, &received, &messages, &window);
 
 	while (window.isOpen())
 	{
@@ -553,6 +553,12 @@ void ClientTaller2() {
 					messageStr = "Cliente:"; //+ std::to_string(userNum);
 					messageStr += mensaje;
 					socketStatus = socket.send(messageStr.c_str(), messageStr.size() + 1);
+
+					if (messageStr == ">exit" || messageStr == " >exit") {
+						socket.disconnect();
+						exit(0);
+					}
+
 					if (socketStatus == sf::TcpSocket::Status::Disconnected) {
 						messageStr = "Servidor desconectado!";
 						messages.push_back(messageStr);
