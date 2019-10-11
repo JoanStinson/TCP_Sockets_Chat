@@ -1,8 +1,28 @@
 ﻿  Main.cpp
-Main.cpp(21): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
+c:\users\freee\documents\github\tcp_sockets_chat\proyectobase\proyectobase\main.cpp(149): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+c:\users\freee\documents\github\tcp_sockets_chat\proyectobase\proyectobase\main.cpp(269): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+c:\users\freee\documents\github\tcp_sockets_chat\proyectobase\proyectobase\main.cpp(374): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+c:\users\freee\documents\github\tcp_sockets_chat\proyectobase\proyectobase\main.cpp(584): warning C4244: 'argument': conversion from 'size_t' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+c:\users\freee\documents\github\tcp_sockets_chat\proyectobase\proyectobase\main.cpp(670): warning C4244: 'argument': conversion from 'float' to 'sf::Int32', possible loss of data
   Generating code
-  112 of 112 functions (100.0%) were compiled, the rest were copied from previous compilation.
-    34 functions were new in current compilation
+  1 of 506 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
-  ProyectoBase.vcxproj -> C:\Users\Freee\Downloads\ProyectoBase\x64\Release\ProyectoBase.exe
+  ProyectoBase.vcxproj -> C:\Users\Freee\Documents\GitHub\TCP_Sockets_Chat\ProyectoBase\x64\Release\ProyectoBase.exe

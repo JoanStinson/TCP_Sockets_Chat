@@ -417,10 +417,10 @@ void DisconnectTaller2(std::vector<sf::TcpSocket*>& list, sf::SocketSelector *ss
 	list.erase(list.begin() + userNum, list.begin() + userNum + 1);
 
 	for (sf::TcpSocket* socket : list) {
-		std::string outMsn = "El cliente " + std::to_string(userNum+1) + " se ha desconectado!";
+		std::string outMsn = "The client " + std::to_string(userNum+1) + " has disconnected!";
 		socket->send(outMsn.c_str(), outMsn.size() + 1);
 	}
-	std::cout << "El cliente " + std::to_string(userNum+1) + " se ha desconectado!" << std::endl;
+	std::cout << "The client " + std::to_string(userNum+1) + " has disconnected!" << std::endl;
 }
 
 void ServerTaller2() {
@@ -453,11 +453,11 @@ void ServerTaller2() {
 
 				sSelector.add(*socket);
 
-				message = "Se ha conectado el cliente " + std::to_string(userNum) + "!";
+				message = "The client " + std::to_string(userNum) + " has connected!";
 				for (sf::TcpSocket* s : sList)
 					if (s != socket)s->send(message.c_str(), message.size() + 1);
 
-				std::cout << "Se ha conectado el cliente " + std::to_string(userNum) + "!" << std::endl;
+				std::cout << "The client " + std::to_string(userNum) + " has connected!" << std::endl;
 				userNum++;
 			}
 
@@ -508,7 +508,7 @@ void ClientTaller2() {
 	std::vector<std::string> messages;
 	sf::Vector2i screenDimensions(800, 600);
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Cliente");
+	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Client");
 
 	sf::Font font;
 	if (!font.loadFromFile("courbd.ttf"))
@@ -550,7 +550,7 @@ void ClientTaller2() {
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					// Send
-					messageStr = "Cliente:"; //+ std::to_string(userNum);
+					messageStr = "Client:"; 
 					messageStr += mensaje;
 					socketStatus = socket.send(messageStr.c_str(), messageStr.size() + 1);
 
@@ -560,7 +560,7 @@ void ClientTaller2() {
 					}
 
 					if (socketStatus == sf::TcpSocket::Status::Disconnected) {
-						messageStr = "Servidor desconectado!";
+						messageStr = "Server disconnected!";
 						messages.push_back(messageStr);
 						if (messages.size() > MAX_MESSAGES)
 							messages.erase(messages.begin(), messages.begin() + 1);
@@ -603,7 +603,7 @@ int main() {
 
 	// Determinar el taller
 	char tallerType;
-	std::cout << "Introduce (1) para Taller 1 o (2) para Taller 2: ";
+	std::cout << "Write '1' for TCP chat or '2' for TCP chat Client/Server: ";
 	std::cin >> tallerType;
 
 	/// Taller 1
